@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+<h1>Personas</h1>
+
+{% for persona in personas %}
+<p>{{persona.email}}</p>
+{% else %}
+<p>No personas yet</p>
+{% endfor %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Title -->
+<div class="page-header">
+    <h1>{{movement.name}}</h1>
+</div>
+
+<!-- Cycle info -->
+<p>Starts {{movement.cycle_start.strftime("%B %d")}} with a cycle length of {{movement.cycle_duration}} days</p>.
+
+<!-- Members -->
+<h2>Members</h2>
+<ul>
+{% for member in movement.members %}
+<li>{{member.get().name}} ({{member.get().email}})</li>
+{% else %}
+<li>No members yet</li>
+{% endfor %}
+</ul>
+
+<!-- Join button -->
+<form action="{{url_for('join_movement', movement_id=movement.key.id())}}" method="POST">
+    <fieldset>
+        {% if current_persona.key in movement.members %}
+        <button type="submit" class="btn btn-small">Leave</button>
+        {% else %}
+        <button type="submit" class="btn btn-small btn-success">Join</button>
+        {% endif %}
+    </fieldset>
+</form>
+
+<!-- Cycles -->
+{% if not movement.has_started() %}
+<div class="well">
+    <p>The first cycle will start on {{movement.cycle_start}}</p>
+</div>
+{% else %}
+    {% for cycle in movement.cycles() %}
+    <div class="well">
+        <h4>
+            <i class="icon-repeat"></i> {{cycle.number}} 
+            <small>{{cycle.start.strftime("%b %d")}} to {{cycle.end.strftime("%b %d")}}</small>
+        </h4>
+        <dl class="dl-horizontal">
+        {% for member in movement.members %}
+            <dt>{{member.get().name}}</dt>
+            {% for goal in member.get().get_goals(movement.key, cycle.number)%}
+            <dd>{{goal.desc}}</dd>
+            {% if goal.review %}
+            <dd><em>goal.review</em></dd>
+            {% endif %}
+            {% else %}
+            <dd>---</dd>
+            {% endfor %}
+        {% endfor %}
+        </dl>
+    </div>
+    {% endfor %}
+{% endif %}
+{% endblock content %}

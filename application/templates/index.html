@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<p><strong>Motor is a goal tracker for groups.</strong> It allows you to keep track of what you and everyone else is doing. To inform you group members, join their <a href="{{url_for('list_movements')}}">movement</a> and enter your goals for the next cycle on this page. Some guidelines for entering goals:</p>
+<ul>
+    <li>Ideally, a single goal should take you no longer than a single day to complete. Try and break down your goals if they are more extensive than that.</li>
+    <li>You cannot change your goals for a running cycle. Try and estimate beforehand how much work you'll get done.</li>
+    <li>If you don't want to do something in a given cycle, just enter nothing.</li>
+</ul>
+
+{% for movement in movements %}
+    <!-- Title -->
+    <h2>
+        <a href="{{url_for('movement_view', movement_id=movement.key.id())}}">{{movement.name}}</a>
+        {% if movement.has_started() %}
+            <small>Cycle {{movement.get_current_cycle()}}</small>
+        {% endif %}
+    </h2>
+
+    <!-- Goals -->
+    <div class="well">
+    {% if movement.has_started() %}
+
+    <!-- Current cycle -->
+        <h4>
+            <i class="icon-repeat"></i> Current 
+            <small>{{movement.get_cycle_startdate().strftime("%b %d")}} to {{movement.get_cycle_enddate().strftime("%b %d")}}</small>
+        </h4>
+
+        <dl class="dl-horizontal">
+        {% for member in movement.members %}
+            <dt>{{member.get().name}}</dt>
+            {% for goal in member.get().get_goals(movement.key)%}
+                <dd>{{goal.desc}}</dd>
+                {% if goal.review %}
+                    <dd><em>goal.review</em></dd>
+                {% endif %}
+            {% else %}
+                <dd>---</dd>
+            {% endfor %}
+        {% endfor %}
+        </dl>
+
+    {% else %}
+
+    <p>This movement will start on {{movement.cycle_start}}</p>
+
+    {% endif %}
+
+    <!-- Next cycle -->
+    {% if current_persona.get_goals(movement.key, movement.get_next_cycle()).count() > 0 %}
+        <h4>
+            <i class="icon-repeat"></i> Next 
+            <small>{{movement.get_cycle_startdate(movement.get_next_cycle()).strftime("%b %d")}} to {{movement.get_cycle_enddate(movement.get_next_cycle()).strftime("%b %d")}}</small>
+        </h4>
+        <small>You can remove goals until this cycle starts.</small>
+
+        <dl class="dl-horizontal">
+            <dt>{{current_persona.name}}</dt>
+        {% for goal in current_persona.get_goals(movement.key, movement.get_next_cycle()) %}
+            <dd>
+                <form action="{{url_for('delete_goal', goal_id=goal.key.id())}}" method="POST" style="margin: 0">{{goal.desc}}<button type="submit" class="button btn-link" style="vertical-align: baseline"><i class="icon-remove"></i></button></form>
+            </dd>
+        {% endfor %}
+        </dl>
+    {% endif %}  
+    </div>
+
+    {% if movement.user_is_member %}
+    <!-- Add goal -->
+    <form class="form-inline" action="{{url_for('add_goal')}}" method="post" accept-charset="utf-8">
+        <fieldset>
+            {{ movement.form.csrf_token }}
+            {{ movement.form.movement_id }}
+            {{ movement.form.cycle }}
+            {{ movement.form.desc(placeholder="Add a goal to the next cycle")|safe }}
+
+            <input class="btn" type="submit" value="Commit"/>
+
+            {% if movement.form.desc.errors %}
+                <ul class="errors">
+                    {% for error in movement.form.desc.errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </fieldset>
+    </form>
+    {% else %}
+    <form action="{{url_for('join_movement', movement_id=movement.key.id())}}" method="POST">
+        <button type="submit" class="btn btn-small btn-success">Join</button>
+    </form>
+    {% endif %}
+{% else %}
+    <p>Once you join movements, their current activity will be listed here.</p>
+    <p>See <a href="{{url_for('list_movements')}}">here</a> for a list of movements</p>
+{% endfor %}
+{% endblock content %}

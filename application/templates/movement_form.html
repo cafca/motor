@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if movement %}
+<ul class="breadcrumb">
+<li><a href="{{url_for('list_movements')}}">Movements</a> <span class="divider">/</span></li>
+<li><a href="{{url_for('movement_view')}}">{{movement.name}}</a> <span class="divider">/</span></li>
+<li class="active">Edit</li>
+</ul>
+
+<h1>{{movement.name}}</h1>
+{% else %}
+<ul class="breadcrumb">
+<li><a href="{{url_for('list_movements')}}">Movements</a> <span class="divider">/</span></li>
+<li class="active">Create</li>
+</ul>
+
+<h1>New movement</h1>
+{% endif %}
+
+<form class="well form-horizontal" action="" method="post" accept-charset="utf-8">
+    <fieldset>
+        {{ movement_form.csrf_token }}
+        <div class="control-group">
+            <div class="control-label">{{ movement_form.name.label }}</div>
+            <div class="controls">
+                {{ movement_form.name|safe }}
+                {% if movement_form.name.errors %}
+                    <ul class="errors">
+                        {% for error in movement_form.name.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+        <div class="control-group">
+            <div class="control-label">{{ movement_form.cycle_start.label }}</div>
+            <div class="controls">
+                {{ movement_form.cycle_start|safe }}
+                {% if movement_form.cycle_start.errors %}
+                    <ul class="errors">
+                        {% for error in movement_form.cycle_start.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+        <div class="control-group">
+            <div class="control-label">{{ movement_form.cycle_duration.label }}</div>
+            <div class="controls">
+                {{ movement_form.cycle_duration|safe }}
+                {% if movement_form.cycle_duration.errors %}
+                    <ul class="errors">
+                        {% for error in movement_form.cycle_duration.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+        <div class="control-group">
+            <div class="control-label">{{ movement_form.cycle_buffer.label }}</div>
+            <div class="controls">
+                {{ movement_form.cycle_buffer|safe }}
+                {% if movement_form.cycle_buffer.errors %}
+                    <ul class="errors">
+                        {% for error in movement_form.cycle_buffer.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="controls">
+                <a class="btn cancel" href="{{ request.referrer }}">Cancel</a>
+                <input class="btn btn-primary" type="submit" value="Create movement"/>
+            </div>
+        </div>
+    </fieldset>
+</form>
+{% endblock content %}
