@@ -1,0 +1,4 @@
+Souma Motor
+Copyright 2013 Vincent Ahrend
+
+Please see licenses/ folder for additional licensing information
