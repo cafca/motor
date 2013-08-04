@@ -1,0 +1,10 @@
+cron:
+- description: goal roundups
+  url: /cron/send-roundups
+  schedule: every day 06:00
+  timezone: Europe/Berlin
+- description: reminders
+  url: /cron/send-reminders
+  schedule: every day 06:00
+  timezone: Europe/Berlin
+  

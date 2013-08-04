@@ -33,6 +33,10 @@ app.add_url_rule('/goals/<int:goal_id>/', 'delete_goal', view_func=views.goal_vi
 app.add_url_rule('/personas/', 'list_personas', view_func=views.list_personas, methods=['GET'])
 app.add_url_rule('/personas/<int:persona_id>/', 'persona_view', view_func=views.persona_view, methods=['GET'])
 
+# Cron jobs
+app.add_url_rule('/cron/send-roundups', 'send_roundups', view_func=views.send_roundups, methods=['GET'])
+app.add_url_rule('/cron/send-reminders', 'send_reminders', view_func=views.send_reminders, methods=['GET'])
+
 
 ## Error handlers
 # Handle 404 errors

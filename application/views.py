@@ -9,16 +9,18 @@ For example the *say_hello* handler, handling the URL route '/hello/<username>',
 
 """
 import datetime
+import logging
 
 from google.appengine.api import users
 from google.appengine.runtime.apiproxy_errors import CapabilityDisabledError
+from google.appengine.api import mail
 
 from flask import request, render_template, flash, url_for, redirect
 
 from flask_cache import Cache
 
 from application import app
-from decorators import login_required
+from decorators import admin_required, login_required
 from models import Movement, Goal, Persona
 from forms import GoalForm, MovementForm
 
@@ -223,3 +225,82 @@ def warmup():
     """
     return ''
 
+
+@admin_required
+def send_reminders():
+    """Send all open reminder emails"""
+
+    for persona in Persona.query():
+
+        # Compile list of movements
+        p_movements = Movement.query(Movement.members == persona.key)
+        movements = list()
+        for m in p_movements:
+            # The email should be sent if the start date of the next cycle less the cycle buffer equals the current date
+            if (m.get_cycle_startdate(m.get_next_cycle()) - m.get_cycle_buffer()) - datetime.date.today() == datetime.timedelta(days=0):
+                n_goals = persona.get_goals(m.key).count()
+                movements.append((m.name, n_goals))
+
+        if len(movements) > 0:
+            # Put together the message
+            message_body = "Hello {name}, \n\nthe following movements are approaching their next cycle. " \
+                + "Take a minute and write down your goals.\n\n".format(persona.name, **kwargs)
+            message_body += "\n".join("* {name} ({num} current goals)".format(
+                name=name, num=n_goals) for name, n_goals in movements)
+            message_body += "\n\nhttp://souma-motor.appspot.com/\n\nYours truly,\Motor"
+
+            # Send message
+            mail.send_mail(sender="Souma Motor <noreply@souma-motor.appspotmail.com>",
+                           to="{name} <{email}>".format(name=persona.name, email=persona.email),
+                           subject="What do you want to do next in {}?".format(", ".join(name for name, n in movements)),
+                           body=message_body)
+
+            logging.info("Sent reminder email about {} movements to {}: {}".format(len(movements), persona.name, message_body))
+        else:
+            logging.info("No reminders for {}".format(persona.name))
+
+    return ""
+
+
+@admin_required
+def send_roundups():
+    """Send all open roundup emails"""
+
+    for persona in Persona.query():
+
+        # Compile list of movements
+        p_movements = Movement.query(Movement.members == persona.key)
+        movements = list()
+        for m in p_movements:
+            # The email should be sent if today is the start date of the current cycle
+            if m.get_cycle_startdate() == datetime.date.today():
+                movements.append(m)
+
+        if len(movements) > 0:
+            # Put together the message
+            message_body = "Hello {name}, \n\na new cycle is starting for these movements. See what your teammates are up to:\n\n".format(
+                name=persona.name, movements=", ".join(m.name for m in movements))
+
+            for m in movements:
+                message_body += "--- {} ---\n\n".format(m.name.upper())
+                for p_key in m.members:
+                    persona = p_key.get()
+                    goals = persona.get_goals(m.key)
+                    message_body += "{} ({}): {}\n".format(persona.name, persona.email, "---" if goals.count() == 0 else "")
+                    message_body += "\n".join("* {}".format(g.desc) for g in goals)
+                    message_body += "\n"
+                message_body += "\n"
+
+            message_body += "\nhttp://souma-motor.appspot.com/\n\nYours truly,\Motor"
+
+            # Send message
+            mail.send_mail(sender="Souma Motor <noreply@souma-motor.appspotmail.com>",
+                           to="{name} <{email}>".format(name=persona.name, email=persona.email),
+                           subject="See what's next in {}".format(", ".join(m.name for m in movements)),
+                           body=message_body)
+
+            logging.info("Sent roundup email about {} movements to {}: {}".format(len(movements), persona.name, message_body))
+        else:
+            logging.info("No roundup for {}".format(persona.name))
+
+    return ""
